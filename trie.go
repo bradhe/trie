@@ -1,4 +1,4 @@
-package main
+package trie
 
 // An implementation of a trie that supports a few common operations, namely
 // Lookup, Range, and Prefix. Pretty straight forward stuff. Figuring out the
