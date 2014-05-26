@@ -6,8 +6,8 @@ package trie
 type Trie interface {
 	Insert(key []byte, val interface{})
 	Lookup(key []byte) interface{}
-	Range(start, end []byte) []interface{}
-	Prefix(prefix []byte) []interface{}
+	Range(start, end []byte) map[string] interface{}
+	Prefix(prefix []byte) map[string] interface{}
 	Count() int
 }
 
@@ -22,18 +22,14 @@ func between(b, start, end byte) bool {
 	return b >= start && b <= end
 }
 
-func (self *trieImpl) getChildValues() []interface{} {
-	results := make([]interface{}, 0)
-
+func (self *trieImpl) getChildValues(res map[string] interface{}, prefix []byte) {
 	if self.value != nil {
-		results = append(results, self.value)
+		res[string(append(prefix, self.key))] = self.value
 	}
 
 	for _, child := range self.children {
-		results = append(results, child.getChildValues()...)
+		child.getChildValues(res, prefix)
 	}
-
-	return results
 }
 
 func (self *trieImpl) Count() int {
@@ -92,12 +88,11 @@ func (self *trieImpl) Lookup(key []byte) interface{} {
 	return nil
 }
 
-func (self *trieImpl) Range(start, end []byte) []interface{} {
-	results := make([]interface{}, 0)
-
+func (self *trieImpl) doRange(start, end, prefix []byte, res map[string] interface{}) {
 	// If both are empty then we completely matched.
 	if len(start) < 1 && len(end) < 1 {
-		return self.getChildValues()
+		self.getChildValues(res, prefix)
+		return
 	}
 
 	var startb, endb byte
@@ -112,7 +107,7 @@ func (self *trieImpl) Range(start, end []byte) []interface{} {
 
 	if self.key == 0 || between(self.key, startb, endb) {
 		if self.value != nil {
-			results = append(results, self.value)
+			res[string(append(prefix, self.key))] = self.value
 		}
 
 		// Ternary would be nice here.
@@ -120,33 +115,42 @@ func (self *trieImpl) Range(start, end []byte) []interface{} {
 
 		if self.key > 0 {
 			offset = 1
+			prefix = append(prefix, self.key)
 		}
 
 		// Do a scan for all the children.
 		for _, child := range self.children {
-			subset := child.Range(start[offset:], end[offset:])
-			results = append(results, subset...)
+			child.doRange(start[offset:], end[offset:], prefix, res)
 		}
 	}
+}
 
+func (self *trieImpl) Range(start, end []byte) map[string] interface{} {
+	results := make(map[string]interface{}, 0)
+	self.doRange(start, end, []byte(""), results)
 	return results
 }
 
-func (self *trieImpl) Prefix(prefix []byte) []interface{} {
+func (self *trieImpl) doPrefix(prefix, orig []byte, res map[string] interface{}) {
 	if len(prefix) == 0 {
-		return self.getChildValues()
+		self.getChildValues(res, orig)
+		return
 	}
 
 	front := prefix[0]
 
 	for _, trie := range self.children {
 		if trie.key == front {
-			return trie.Prefix(prefix[1:len(prefix)])
+			trie.doPrefix(prefix[1:len(prefix)], append(orig, front), res)
+			return
 		}
 	}
+}
 
-	// Didn't match anything.
-	return nil
+func (self *trieImpl) Prefix(prefix []byte) map[string] interface{} {
+	res := make(map[string] interface{})
+	self.doPrefix(prefix, []byte(""), res)
+	return res
 }
 
 func New() Trie {
