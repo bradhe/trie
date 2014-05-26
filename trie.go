@@ -24,11 +24,11 @@ func between(b, start, end byte) bool {
 
 func (self *trieImpl) getChildValues(res map[string] interface{}, prefix []byte) {
 	if self.value != nil {
-		res[string(append(prefix, self.key))] = self.value
+		res[string(prefix)] = self.value
 	}
 
 	for _, child := range self.children {
-		child.getChildValues(res, prefix)
+		child.getChildValues(res, append(prefix, child.key))
 	}
 }
 

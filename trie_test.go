@@ -119,6 +119,49 @@ func TestTriePrefix(t *testing.T) {
 	}
 }
 
+func TestTriePrefixWithExactMatch(t *testing.T) {
+	trie := New()
+	trie.Insert([]byte("test"), "Hello")
+	trie.Insert([]byte("test2"), "World")
+
+	vals := trie.Prefix([]byte("test"))
+
+	if len(vals) != 2 {
+		t.Fatalf(`Expected length of val to be 2, got %d.`, len(vals))
+	}
+
+	// We also want to test that it got the write keys back.
+	if vals["test"] != "Hello" {
+		t.Logf("%v", vals)
+		t.Fatalf(`Expected "test" to be "Hello", got %s.`, vals["test"])
+	}
+
+	if vals["test2"] != "World" {
+		t.Fatalf(`Expected "test2" to be "World", got %s.`, vals["test2"])
+	}
+}
+
+func TestTriePrefixWithLongTails(t *testing.T) {
+	trie := New()
+	trie.Insert([]byte("test"), "Hello")
+	trie.Insert([]byte("test2"), "World")
+	trie.Insert([]byte("test again"), "Once")
+	trie.Insert([]byte("test again wow"), "Again")
+
+	vals := trie.Prefix([]byte("test"))
+
+	if len(vals) != 4 {
+		t.Fatalf(`Expected length of val to be 2, got %d.`, len(vals))
+	}
+
+	// We also want to test that it got the write keys back.
+	if vals["test again wow"] != "Again" {
+		t.Logf("%v", vals)
+		t.Fatalf(`Expected "test again wow" to be "Again", got %s.`, vals["test again wow"])
+	}
+}
+
+
 func BenchmarkTrieLookup(b *testing.B) {
 	trie := New()
 	keys := generateKeys(6, "")
