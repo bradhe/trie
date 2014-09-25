@@ -28,7 +28,8 @@ func (self *trieImpl) getChildValues(res map[string] interface{}, prefix []byte)
 	}
 
 	for _, child := range self.children {
-		child.getChildValues(res, append(prefix, child.key))
+		k := append(prefix, child.key)
+		child.getChildValues(res, k)
 	}
 }
 
@@ -91,7 +92,7 @@ func (self *trieImpl) Lookup(key []byte) interface{} {
 func (self *trieImpl) doRange(start, end, prefix []byte, res map[string] interface{}) {
 	// If both are empty then we completely matched.
 	if len(start) < 1 && len(end) < 1 {
-		self.getChildValues(res, prefix)
+		self.getChildValues(res, append(prefix, self.key))
 		return
 	}
 

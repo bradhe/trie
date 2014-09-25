@@ -52,6 +52,26 @@ func TestTrieRangeExclusive(t *testing.T) {
 	}
 }
 
+func TestTrieRangePrefixed(t *testing.T) {
+	trie := New()
+	trie.Insert([]byte("test1"), "Hello")
+	trie.Insert([]byte("test2"), "World")
+
+	vals := trie.Range([]byte("test"), []byte("tesu"))
+
+	if len(vals) != 2 {
+		t.Fatalf(`Expected length of val to be 2, got %d.`, len(vals))
+	}
+
+	if vals["test1"] != "Hello" {
+		t.Fatalf(`Expected "test1" to be "Hello", got "%v"`, vals["test1"])
+	}
+
+	if vals["test2"] != "World" {
+		t.Fatalf(`Expected "test2" to be "World", got "%v"`, vals["test2"])
+	}
+}
+
 func TestTrieRangeOutside(t *testing.T) {
 	trie := New()
 	trie.Insert([]byte("test1"), "Hello")
@@ -99,23 +119,23 @@ func TestTrieRangeUnbalancedBeginning(t *testing.T) {
 
 func TestTriePrefix(t *testing.T) {
 	trie := New()
-	trie.Insert([]byte("test1"), "Hello")
-	trie.Insert([]byte("test2"), "World")
+	trie.Insert([]byte("table2#test1"), "Hello")
+	trie.Insert([]byte("table2#test2"), "World")
 
-	vals := trie.Prefix([]byte("test"))
+	vals := trie.Prefix([]byte("table2"))
 
 	if len(vals) != 2 {
 		t.Fatalf(`Expected length of val to be 2, got %d.`, len(vals))
 	}
 
 	// We also want to test that it got the write keys back.
-	if vals["test1"] != "Hello" {
+	if vals["table2#test1"] != "Hello" {
 		t.Logf("%v", vals)
-		t.Fatalf(`Expected "test1" to be "Hello", got %s.`, vals["test1"])
+		t.Fatalf(`Expected "test1" to be "Hello", got %s.`, vals["table2#test1"])
 	}
 
-	if vals["test2"] != "World" {
-		t.Fatalf(`Expected "test2" to be "World", got %s.`, vals["test2"])
+	if vals["table2#test2"] != "World" {
+		t.Fatalf(`Expected "test2" to be "World", got %s.`, vals["table2#test2"])
 	}
 }
 
