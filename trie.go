@@ -22,6 +22,27 @@ func between(b, start, end byte) bool {
 	return b >= start && b <= end
 }
 
+func maxString(str []byte) []byte {
+	s := make([]byte, len(str))
+
+	for i := range s {
+		s[i] = 0xFF
+	}
+
+	return s
+}
+
+func minString(str []byte) []byte {
+	s := make([]byte, len(str))
+
+	// NOTE: This isn't strictly nescessary, it gets instantiated to 0s anyway.
+	for i := range s {
+		s[i] = 0x00
+	}
+
+	return s
+}
+
 func (self *trieImpl) getChildValues(res map[string] interface{}, prefix []byte) {
 	if self.value != nil {
 		res[string(prefix)] = self.value
@@ -88,45 +109,16 @@ func (self *trieImpl) Lookup(key []byte) interface{} {
 	// Didn't match anything.
 	return nil
 }
-func (self *trieImpl) doRangeLessThan(end, prefix []byte, res map[string] interface{}) {
-	if len(end) < 1 {
-		self.getChildValues(res, append(prefix, self.key))
-		return
-	}
-
-	if self.key <= end[0] {
-		if self.value != nil {
-			res[string(append(prefix, self.key))] = self.value
-		}
-
-		prefix = append(prefix, self.key)
-
-		for _, child := range self.children {
-			child.doRangeLessThan(end[1:], prefix, res)
-		}
-	}
-}
-
-func (self *trieImpl) doRangeGreaterThan(start, prefix []byte, res map[string] interface{}) {
-	if len(start) < 1 {
-		self.getChildValues(res, append(prefix, self.key))
-		return
-	}
-
-	if self.key >= start[0] {
-		if self.value != nil {
-			res[string(append(prefix, self.key))] = self.value
-		}
-
-		prefix = append(prefix, self.key)
-
-		for _, child := range self.children {
-			child.doRangeGreaterThan(start[1:], prefix, res)
-		}
-	}
-}
 
 func (self *trieImpl) doRange(start, end, prefix []byte, res map[string] interface{}) {
+	if self.key == 0 {
+		for _, child := range self.children {
+			child.doRange(start, end, prefix, res)
+		}
+
+		return
+	}
+
 	// If both are empty then we completely matched.
 	if len(start) < 1 && len(end) < 1 {
 		self.getChildValues(res, append(prefix, self.key))
@@ -137,33 +129,42 @@ func (self *trieImpl) doRange(start, end, prefix []byte, res map[string] interfa
 
 	if len(start) > 0 {
 		startb = start[0]
+		start = start[1:]
 	}
 
 	if len(end) > 0 {
 		endb = end[0]
+		end = end[1:]
 	}
 
-	if self.key == 0 {
-		// Do a scan for all the children.
+	if (startb == self.key) && (endb == self.key) {
 		for _, child := range self.children {
-			child.doRange(start, end, prefix, res)
+			child.doRange(start, end, append(prefix, self.key), res)
 		}
-	} else if startb == endb {
+
+		return
+	}
+
+	prefix = append(prefix, self.key)
+
+	if (startb == self.key) {
 		if self.value != nil {
-			res[string(append(prefix, self.key))] = self.value
+			res[string(prefix)] = self.value
 		}
 
 		for _, child := range self.children {
-			child.doRange(start[1:], end[1:], prefix, res)
+			child.doRange(start, maxString(start), prefix, res)
 		}
-	} else {
+	} else if (endb == self.key) {
+		if self.value != nil {
+			res[string(prefix)] = self.value
+		}
+
 		for _, child := range self.children {
-			if child.key == endb {
-				child.doRangeLessThan(end[1:], append(prefix, self.key), res)
-			} else {
-				child.doRangeGreaterThan(start[1:], append(prefix, self.key), res)
-			}
+			child.doRange(minString(end), end, prefix, res)
 		}
+	} else if between(self.key, startb, endb) {
+		self.getChildValues(res, prefix)
 	}
 }
 
