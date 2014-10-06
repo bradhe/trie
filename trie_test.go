@@ -124,38 +124,14 @@ func TestTrieRangeUnbalancedEnding(t *testing.T) {
 	}
 }
 
-func TestTrieRangeUnbalancedBeginning(t *testing.T) {
-	trie := New()
-	trie.Insert([]byte("test1"), "Hello")
-	trie.Insert([]byte("test2"), "World")
-
-	// NOTE: This is invalid as endKey technically comes before startKey
-	vals := trie.Range([]byte("test1"), []byte("test"))
-
-	if len(vals) != 0 {
-		t.Fatalf(`Expected length of val to be 0, got %d.`, len(vals))
-	}
-}
-
 func TestTrieRangeFullyBetween(t *testing.T) {
-	trie := New()
-	trie.Insert([]byte("20140901"), "20140901")
-	trie.Insert([]byte("20140902"), "20140902")
-	trie.Insert([]byte("20140903"), "20140903")
-	trie.Insert([]byte("20140904"), "20140904")
-	trie.Insert([]byte("20140905"), "20140905")
-	trie.Insert([]byte("20140906"), "20140906")
-	trie.Insert([]byte("20140907"), "20140907")
-	trie.Insert([]byte("20140908"), "20140907")
-	trie.Insert([]byte("20140909"), "20140907")
-	trie.Insert([]byte("20140910"), "20140910")
-	trie.Insert([]byte("20140911"), "20140911")
+	trie := setupTrie()
 
 	// NOTE: This is invalid as endKey technically comes before startKey
 	vals := trie.Range([]byte("20140901"), []byte("20140911"))
 
-	if len(vals) != 10 {
-		t.Fatalf(`Expected length of val to be 10, got %d.`, len(vals))
+	if len(vals) != 11 {
+		t.Fatalf(`Expected length of val to be 11, got %d.`, len(vals))
 	}
 }
 
@@ -270,4 +246,20 @@ func generateKeys(level int, prefix string) []string {
 	}
 
 	return keys
+}
+
+func setupTrie() Trie {
+	trie := New()
+	trie.Insert([]byte("20140901"), "20140901")
+	trie.Insert([]byte("20140902"), "20140902")
+	trie.Insert([]byte("20140903"), "20140903")
+	trie.Insert([]byte("20140904"), "20140904")
+	trie.Insert([]byte("20140905"), "20140905")
+	trie.Insert([]byte("20140906"), "20140906")
+	trie.Insert([]byte("20140907"), "20140907")
+	trie.Insert([]byte("20140908"), "20140907")
+	trie.Insert([]byte("20140909"), "20140907")
+	trie.Insert([]byte("20140910"), "20140910")
+	trie.Insert([]byte("20140911"), "20140911")
+	return trie
 }
