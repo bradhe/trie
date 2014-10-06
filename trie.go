@@ -88,6 +88,43 @@ func (self *trieImpl) Lookup(key []byte) interface{} {
 	// Didn't match anything.
 	return nil
 }
+func (self *trieImpl) doRangeLessThan(end, prefix []byte, res map[string] interface{}) {
+	if len(end) < 1 {
+		self.getChildValues(res, append(prefix, self.key))
+		return
+	}
+
+	if self.key <= end[0] {
+		if self.value != nil {
+			res[string(append(prefix, self.key))] = self.value
+		}
+
+		prefix = append(prefix, self.key)
+
+		for _, child := range self.children {
+			child.doRangeLessThan(end[1:], prefix, res)
+		}
+	}
+}
+
+func (self *trieImpl) doRangeGreaterThan(start, prefix []byte, res map[string] interface{}) {
+	if len(start) < 1 {
+		self.getChildValues(res, append(prefix, self.key))
+		return
+	}
+
+	if self.key >= start[0] {
+		if self.value != nil {
+			res[string(append(prefix, self.key))] = self.value
+		}
+
+		prefix = append(prefix, self.key)
+
+		for _, child := range self.children {
+			child.doRangeGreaterThan(start[1:], prefix, res)
+		}
+	}
+}
 
 func (self *trieImpl) doRange(start, end, prefix []byte, res map[string] interface{}) {
 	// If both are empty then we completely matched.
@@ -106,22 +143,26 @@ func (self *trieImpl) doRange(start, end, prefix []byte, res map[string] interfa
 		endb = end[0]
 	}
 
-	if self.key == 0 || between(self.key, startb, endb) {
+	if self.key == 0 {
+		// Do a scan for all the children.
+		for _, child := range self.children {
+			child.doRange(start, end, prefix, res)
+		}
+	} else if startb == endb {
 		if self.value != nil {
 			res[string(append(prefix, self.key))] = self.value
 		}
 
-		// Ternary would be nice here.
-		var offset int
-
-		if self.key > 0 {
-			offset = 1
-			prefix = append(prefix, self.key)
-		}
-
-		// Do a scan for all the children.
 		for _, child := range self.children {
-			child.doRange(start[offset:], end[offset:], prefix, res)
+			child.doRange(start[1:], end[1:], prefix, res)
+		}
+	} else {
+		for _, child := range self.children {
+			if child.key == endb {
+				child.doRangeLessThan(end[1:], append(prefix, self.key), res)
+			} else {
+				child.doRangeGreaterThan(start[1:], append(prefix, self.key), res)
+			}
 		}
 	}
 }
