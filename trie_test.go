@@ -40,6 +40,21 @@ func TestTrieRangeInclusive(t *testing.T) {
 	}
 }
 
+func TestTrieRangeWithCommonSuffix(t *testing.T) {
+	trie := New()
+	trie.Insert([]byte("test:2015-04-30:test"), "Hello")
+	trie.Insert([]byte("test:2015-05-01:test"), "Hello")
+	trie.Insert([]byte("test:2015-05-02:test"), "Hello")
+	trie.Insert([]byte("test:2015-05-03:test"), "Hello")
+	trie.Insert([]byte("test:2015-05-04:test"), "Hello")
+
+	vals := trie.Range([]byte("test:2015-05-01:test"), []byte("test:2015-05-04:test"))
+
+	if len(vals) != 4 {
+		t.Fatalf(`Expected length of val to be 4, got %d.`, len(vals))
+	}
+}
+
 func TestTrieRangeExclusive(t *testing.T) {
 	trie := New()
 	trie.Insert([]byte("test1"), "Hello")
@@ -198,7 +213,6 @@ func TestTriePrefixWithLongTails(t *testing.T) {
 		t.Fatalf(`Expected "test again wow" to be "Again", got %s.`, vals["test again wow"])
 	}
 }
-
 
 func BenchmarkTrieLookup(b *testing.B) {
 	trie := New()
