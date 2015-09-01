@@ -119,6 +119,23 @@ func TestTrieRangePartiallyOutside(t *testing.T) {
 	}
 }
 
+func TestTrieOffsetRangeNPartiallyOutside(t *testing.T) {
+	trie := New()
+	trie.Insert([]byte("test1"), "Hello")
+	trie.Insert([]byte("test2"), "World")
+
+	offset := []byte("test1")
+	vals := trie.OffsetRangeN(offset, []byte("test1"), []byte("test4"), 2)
+
+	if len(vals) != 1 {
+		t.Fatalf(`Expected length of val to be 2, got %d.`, len(vals))
+	}
+
+	if vals["test2"] != "World" {
+		t.Fatalf(`Expected "test2" to be "World", got "%v"`, vals["test2"])
+	}
+}
+
 func TestTrieRangeUnbalancedEnding(t *testing.T) {
 	trie := New()
 	trie.Insert([]byte("test1"), "Hello")
@@ -139,13 +156,42 @@ func TestTrieRangeUnbalancedEnding(t *testing.T) {
 	}
 }
 
+func TestTrieOffsetRangeNUnbalancedEnding(t *testing.T) {
+	trie := New()
+	trie.Insert([]byte("test1"), "Hello")
+	trie.Insert([]byte("test2"), "World")
+
+	offset := []byte("test1")
+	vals := trie.OffsetRangeN(offset, []byte("test"), []byte("test4"), 2)
+
+	if len(vals) != 1 {
+		t.Fatalf(`Expected length of val to be 1, got %d.`, len(vals))
+	}
+
+	if vals["test2"] != "World" {
+		t.Fatalf(`Expected "test2" to be "World", got "%v"`, vals["test2"])
+	}
+}
+
 func TestTrieRangeNFullyBetween(t *testing.T) {
 	trie := setupTrie()
 
 	vals := trie.RangeN([]byte("20140901"), []byte("20140911"), 5)
 
 	if len(vals) != 5 {
-		t.Fatalf(`Expected length of val to be 11, got %d.`, len(vals))
+		t.Fatalf(`Expected length of val to be 5, got %d.`, len(vals))
+	}
+}
+
+func TestTrieOffsetRangeNFullyBetween(t *testing.T) {
+	trie := setupTrie()
+
+	offset := []byte("20140905")
+	vals := trie.OffsetRangeN(offset, []byte("20140901"), []byte("20140911"), 5)
+
+	if len(vals) != 5 {
+		t.Logf("%v", vals)
+		t.Fatalf(`Expected length of val to be 5, got %d.`, len(vals))
 	}
 }
 
@@ -197,6 +243,41 @@ func TestTriePrefixN(t *testing.T) {
 	if vals["table2#test1"] != "Hello" {
 		t.Logf("%v", vals)
 		t.Fatalf(`Expected "test1" to be "Hello", got %s.`, vals["table2#test1"])
+	}
+}
+
+func TestTrieOffsetPrefixN(t *testing.T) {
+	trie := New()
+	trie.Insert([]byte("table2#test1"), "Hello")
+	trie.Insert([]byte("table2#test2"), "World")
+	trie.Insert([]byte("table2#test3"), "Yes")
+	trie.Insert([]byte("table2#test4"), "Again")
+	trie.Insert([]byte("table2#test5"), "Blah")
+
+	// Throw in a random out-of-bounds value to make sure we don't get outside
+	// the prefix.
+	trie.Insert([]byte("table3#test2"), "Hallooo")
+
+	vals := trie.OffsetPrefixN([]byte("table2#test2"), []byte("table2"), 10)
+
+	if len(vals) != 3 {
+		t.Logf("%v", vals)
+		t.Fatalf(`Expected length of val to be 2, got %d.`, len(vals))
+	}
+
+	if vals["table2#test3"] != "Yes" {
+		t.Logf("%v", vals)
+		t.Fatalf(`Expected "test3" to be "Yes", got %s.`, vals["table2#test3"])
+	}
+
+	if vals["table2#test4"] != "Again" {
+		t.Logf("%v", vals)
+		t.Fatalf(`Expected "test4" to be "Again", got %s.`, vals["table2#test4"])
+	}
+
+	if vals["table2#test5"] != "Blah" {
+		t.Logf("%v", vals)
+		t.Fatalf(`Expected "test5" to be "Blah", got %s.`, vals["table2#test5"])
 	}
 }
 
