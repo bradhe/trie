@@ -139,6 +139,16 @@ func TestTrieRangeUnbalancedEnding(t *testing.T) {
 	}
 }
 
+func TestTrieRangeNFullyBetween(t *testing.T) {
+	trie := setupTrie()
+
+	vals := trie.RangeN([]byte("20140901"), []byte("20140911"), 5)
+
+	if len(vals) != 5 {
+		t.Fatalf(`Expected length of val to be 11, got %d.`, len(vals))
+	}
+}
+
 func TestTrieRangeFullyBetween(t *testing.T) {
 	trie := setupTrie()
 
@@ -169,6 +179,53 @@ func TestTriePrefix(t *testing.T) {
 
 	if vals["table2#test2"] != "World" {
 		t.Fatalf(`Expected "test2" to be "World", got %s.`, vals["table2#test2"])
+	}
+}
+
+func TestTriePrefixN(t *testing.T) {
+	trie := New()
+	trie.Insert([]byte("table2#test1"), "Hello")
+	trie.Insert([]byte("table2#test2"), "World")
+
+	vals := trie.PrefixN([]byte("table2"), 1)
+
+	if len(vals) != 1 {
+		t.Fatalf(`Expected length of val to be 2, got %d.`, len(vals))
+	}
+
+	// We also want to test that it got the write keys back.
+	if vals["table2#test1"] != "Hello" {
+		t.Logf("%v", vals)
+		t.Fatalf(`Expected "test1" to be "Hello", got %s.`, vals["table2#test1"])
+	}
+}
+
+func TestTriePrefixNReturnsEarlyIfThereAreMissingValues(t *testing.T) {
+	trie := New()
+	trie.Insert([]byte("table2#test1"), "Hello")
+	trie.Insert([]byte("table2#test2"), "World")
+	trie.Insert([]byte("table2#test3"), "Yes")
+
+	vals := trie.PrefixN([]byte("table2"), 5)
+
+	if len(vals) != 3 {
+		t.Fatalf(`Expected length of val to be 2, got %d.`, len(vals))
+	}
+
+	// We also want to test that it got the write keys back.
+	if vals["table2#test1"] != "Hello" {
+		t.Logf("%v", vals)
+		t.Fatalf(`Expected "test1" to be "Hello", got %s.`, vals["table2#test1"])
+	}
+
+	if vals["table2#test2"] != "World" {
+		t.Logf("%v", vals)
+		t.Fatalf(`Expected "test2" to be "World", got %s.`, vals["table2#test2"])
+	}
+
+	if vals["table2#test3"] != "Yes" {
+		t.Logf("%v", vals)
+		t.Fatalf(`Expected "test3" to be "Yes", got %s.`, vals["table2#test3"])
 	}
 }
 
@@ -211,6 +268,27 @@ func TestTriePrefixWithLongTails(t *testing.T) {
 	if vals["test again wow"] != "Again" {
 		t.Logf("%v", vals)
 		t.Fatalf(`Expected "test again wow" to be "Again", got %s.`, vals["test again wow"])
+	}
+}
+
+func TestTrieRangeWithCloseNeighbors(t *testing.T) {
+	trie := New()
+	trie.Insert([]byte("prefix1:prefix2:2015-05-01"), "Hello")
+	trie.Insert([]byte("prefix1:prefix200:2015-05-01"), "What")
+	trie.Insert([]byte("prefix1:prefix2:2015-05-30"), "Friend")
+
+	vals := trie.Range([]byte("prefix1:prefix2:2015-05-01"), []byte("prefix1:prefix2:2015-05-30"))
+
+	if len(vals) != 2 {
+		t.Fatalf(`Expected length of val to be 2, got %d.`, len(vals))
+	}
+
+	if vals["prefix1:prefix2:2015-05-01"] != "Hello" {
+		t.Fatalf(`Expected "test1" to be "Hello", got "%v"`, vals["prefix1:prefix2:2015-05-01"])
+	}
+
+	if vals["prefix1:prefix2:2015-05-30"] != "Friend" {
+		t.Fatalf(`Expected "test2" to be "World", got "%v"`, vals["prefix1:prefix2:2015-05-30"])
 	}
 }
 
