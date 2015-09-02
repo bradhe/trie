@@ -169,7 +169,23 @@ func (self *trieImpl) Insert(key []byte, val interface{}) {
 	trie.children = make([]*trieImpl, 0)
 	trie.key = front
 
-	self.children = append(self.children, trie)
+	// We should order where in the children this gets placed, based on the
+	// location.
+	pos := -1
+
+	for i, child := range self.children {
+		if child.key > front {
+			pos = i
+			break
+		}
+	}
+
+	if pos < 0 {
+		self.children = append(self.children, trie)
+	} else {
+		// We found a specific position for this thing to be in!
+		self.children = append(self.children[:pos], append([]*trieImpl{trie}, self.children[pos:]...)...)
+	}
 
 	// Now let's drill in!
 	trie.Insert(key[1:len(key)], val)
