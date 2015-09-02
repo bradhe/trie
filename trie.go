@@ -97,6 +97,11 @@ func isOffsetLesser(offset, orig []byte) bool {
 		n := minOf(l1, l2)
 
 		for i := 0; i < n; i++ {
+			// If any one is greater, then we're done here.
+			if orig[i] > offset[i] {
+				return true
+			}
+
 			if offset[i] > orig[i] {
 				return false
 			}
@@ -127,10 +132,7 @@ func (self *trieImpl) getChildValues(res map[string]interface{}, prefix, offset 
 
 	for _, child := range self.children {
 		k := append(prefix, child.key)
-
-		if isOffsetLesser(offset, k) {
-			child.getChildValues(res, k, offset, n)
-		}
+		child.getChildValues(res, k, offset, n)
 	}
 }
 

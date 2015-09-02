@@ -281,6 +281,38 @@ func TestTrieOffsetPrefixN(t *testing.T) {
 	}
 }
 
+func TestTrieDeepOffsetPrefixN(t *testing.T) {
+	trie := New()
+	trie.Insert([]byte("table2#test#doodad:1"), "Hello")
+	trie.Insert([]byte("table2#test#doodad:2"), "World")
+	trie.Insert([]byte("table2#test#tesla:3"), "Yes")
+	trie.Insert([]byte("table2#test#tesla:4"), "Again")
+	trie.Insert([]byte("table2#test#tesla:5"), "Blah")
+	trie.Insert([]byte("table3#test#doodad:2"), "Hallooo")
+
+	vals := trie.OffsetPrefixN([]byte("table2#test#doodad:2"), []byte("table2#test#"), 10)
+
+	if len(vals) != 3 {
+		t.Logf("%v", vals)
+		t.Fatalf(`Expected length of val to be 3, got %d.`, len(vals))
+	}
+
+	if vals["table2#test#tesla:3"] != "Yes" {
+		t.Logf("%v", vals)
+		t.Fatalf(`Expected "table2#test#tesla:3" to be "Yes", got %s.`, vals["table2#test#tesla:3"])
+	}
+
+	if vals["table2#test#tesla:4"] != "Again" {
+		t.Logf("%v", vals)
+		t.Fatalf(`Expected "table2#test#tesla:4" to be "again", got %s.`, vals["table2#test#tesla:4"])
+	}
+
+	if vals["table2#test#tesla:5"] != "Blah" {
+		t.Logf("%v", vals)
+		t.Fatalf(`Expected "table2#test#tesla:5" to be "Blah", got %s.`, vals["table2#test#tesla:3"])
+	}
+}
+
 func TestTriePrefixNReturnsEarlyIfThereAreMissingValues(t *testing.T) {
 	trie := New()
 	trie.Insert([]byte("table2#test1"), "Hello")
