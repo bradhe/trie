@@ -405,6 +405,45 @@ func TestTrieRangeWithCloseNeighbors(t *testing.T) {
 	}
 }
 
+func TestTrieDelete(t *testing.T) {
+	trie := New()
+	trie.Insert([]byte("prefix1:prefix2:2015-05-01"), "Hello")
+	trie.Insert([]byte("prefix1:prefix200:2015-05-01"), "What")
+	trie.Insert([]byte("prefix1:prefix2:2015-05-30"), "Friend")
+
+	trie.Delete([]byte("prefix1:prefix2:2015-05-30"))
+	val := trie.Lookup([]byte("prefix1:prefix2:2015-05-30"))
+
+	if val != nil {
+		t.Fatalf(`Expected "prefix1:prefix2:2015-05-30" to be nil, got %v`, val)
+	}
+
+	val = trie.Lookup([]byte("prefix1:prefix200:2015-05-01"))
+
+	if val != "What" {
+		t.Fatalf(`Expected "prefix1:prefix2:2015-05-30" to be "What", got %v`, val)
+	}
+}
+
+func TestTrieScanWithDelete(t *testing.T) {
+	trie := New()
+	trie.Insert([]byte("table2#test1"), "Hello")
+	trie.Insert([]byte("table2#test2"), "World")
+
+	trie.Delete([]byte("table2#test1"))
+
+	vals := trie.Prefix([]byte("table2"))
+
+	if len(vals) != 1 {
+		t.Fatalf(`Expected length of val to be 1, got %d.`, len(vals))
+	}
+
+	// We also want to test that it got the write keys back.
+	if vals["table2#test2"] != "World" {
+		t.Fatalf(`Expected "test2" to be "World", got %s.`, vals["table2#test2"])
+	}
+}
+
 func BenchmarkTrieLookup(b *testing.B) {
 	trie := New()
 	keys := generateKeys(6, "")

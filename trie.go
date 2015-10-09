@@ -13,6 +13,7 @@ type Trie interface {
 	PrefixN(prefix []byte, n int) map[string]interface{}
 	OffsetPrefixN(offset, prefix []byte, n int) map[string]interface{}
 	Count() int
+	Delete(key []byte)
 }
 
 type trieImpl struct {
@@ -206,6 +207,22 @@ func (self *trieImpl) Lookup(key []byte) interface{} {
 
 	// Didn't match anything.
 	return nil
+}
+
+func (self *trieImpl) Delete(key []byte) {
+	if len(key) == 0 {
+		self.value = nil
+		return
+	}
+
+	front := key[0]
+
+	for _, trie := range self.children {
+		if trie.key == front {
+			trie.Delete(key[1:len(key)])
+			break
+		}
+	}
 }
 
 func (self *trieImpl) doRange(offset, start, end, prefix []byte, res map[string]interface{}, n *int) {
